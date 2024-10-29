@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap-theme.min.css" integrity="sha384-6pzBo3FDv/PJ8r2KRkGHifhEocL+1X2rVCTTkUfGk7/0pbek5mMa1upzvWbrUbOZ" crossorigin="anonymous" />
+        <title>Mi Primer Chat con NodeJS</title>
+    </head>
+    <body>
+        <div class="container">
+            <br />
+            <div class="jumbotron">
+                <h1 class="display-4">Inicio de sesi&oacute;n</h1>
+                <p>Ingrese su correo electr&oacute;nico y password para continuar</p>
+            <br />
+            <input id="email" class="form-control" placeholder="Correo electronico" type="email" />
+            <br />
+            <input id="password" class="form-control" placeholder="Password" type="password" />
+            <br />
+            <button id="enviar" class="btn btn-success">Enviar</button>
+                <br />
+                <br />
+                <p>No tienes cuenta?</p>
+                <a href="http://localhost:3000/signup">Registrate</a>
+            </div>
+
+            <div id="status"></div>
+        </div>
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js" integrity="sha384-aJ21OjlMXNL5UyIl/XNwTMqvzeRMZH2w8c5cRVpzpU8Y5bApTppSuUkhZXN0VxHd" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+        <script>
+            $(() => {
+                $("#enviar").click(() => {
+                    if ($("#password").val() !== "" && $("#email").val() !== "") {    
+                            const password = $("#password").val();
+                            enviarUsuario(
+                                {
+                                    email: $("#email").val(),
+                                    password: CryptoJS.SHA256(password).toString(CryptoJS.enc.Hex),
+                                },
+                                callback,
+                                callback_error
+                            )
+                    } else {
+                        alert("Por favor llene todos los campos antes de continuar.");
+                    }
+                })
+            });
+            const base_url = "http://localhost:3000";
+            const base_url_api = "http://localhost:3001";
+            const url = `${base_url_api}/api/v1/usuarios`;
+            
+            const callback = response_data => {
+                if (response_data.status === 200) {
+                    alert("Sesion iniciada correctamente.");
+                    localStorage.setItem("username", response_data.data[0].nombre);
+                    localStorage.setItem("_id", response_data.data[0]._id);
+                    localStorage.setItem("token", response_data.jwt);
+                    setTimeout(() => {
+                        window.location.replace(`${base_url}/`)
+                    }, 2000)
+                } else {
+                    alert("Ocurrio un error al intentar iniciar sesión. verifique sus datos para continuar.");
+                }
+            };
+
+            const callback_error = () => alert("Ocurrio un error al intentar iniciar sesión. verifique sus datos para continuar.");
+
+            const enviarUsuario = (usuario, callback, callback_error) => $.post(
+                `${url}/login`, 
+                usuario,
+            )
+            .done(callback)
+            .fail(
+                callback_error
+            );
+        </script>
+    </body>
+</html>

@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: chatnodejs-st
+
+spec:
+  serviceName: "chatnodejs"
+  replicas: 2
+  selector:
+    matchLabels:
+      app: chatnodejs
+  template:
+    metadata:
+      labels:
+        app: chatnodejs
+    spec:
+      containers:
+      - name: chatnodejs
+        image: local/chatnode
+        imagePullPolicy: Never
+        ports:
+          - containerPort: 3000
+          - containerPort: 3001
+        livenessProbe:
+          httpGet:
+            path: /                
+            port: 3000             
+          initialDelaySeconds: 30  
+          periodSeconds: 10        
+        readinessProbe:
+          httpGet:
+            path: /api/v1                
+            port: 3001             
+          initialDelaySeconds: 30   
+          periodSeconds: 10         
+
+      - name: mongo-db
+        image: mongo:latest
+        ports:
+        - containerPort: 27017
+        args: ["--dbpath","/data/db"]
+        envFrom:
+          - configMapRef:
+              name: db-config
+        volumeMounts:
+        - name: "mongo-data-dir"
+          mountPath: "/data/db"
+        - name: "init-database"
+          mountPath: "/docker-entrypoint-initdb.d/"
+      volumes:
+      - name: "init-database"
+        configMap:
+          name: init-db-configmap
+  volumeClaimTemplates:
+  - metadata:
+      name: "mongo-data-dir"
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 1Gi

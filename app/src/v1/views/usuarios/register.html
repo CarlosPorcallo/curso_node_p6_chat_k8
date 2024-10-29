@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap-theme.min.css" integrity="sha384-6pzBo3FDv/PJ8r2KRkGHifhEocL+1X2rVCTTkUfGk7/0pbek5mMa1upzvWbrUbOZ" crossorigin="anonymous" />
+        <title>Mi Primer Chat con NodeJS</title>
+    </head>
+    <body>
+        <div class="container">
+            <br />
+            <div class="jumbotron">
+                <h1 class="display-4">Creaci&oacute;n de usuario</h1>
+                <p>Ingrese los datos solicitados para continuar</p>
+            <br />
+            <input id="nombre" class="form-control" placeholder="Nombre" />
+            <br />
+            <input id="password" class="form-control" placeholder="Password" type="password" />
+            <br />
+            <input id="password-confirm" class="form-control" placeholder="Confirmar Password" type="password" />
+            <br />
+            <input id="email" class="form-control" placeholder="Correo electronico" type="email" />
+            <br />
+            <button id="enviar" class="btn btn-success">Enviar</button>
+            </div>
+            <div id="status"></div>
+        </div>
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js" integrity="sha384-aJ21OjlMXNL5UyIl/XNwTMqvzeRMZH2w8c5cRVpzpU8Y5bApTppSuUkhZXN0VxHd" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+        <script>
+            $(() => {
+                $("#enviar").click(() => {
+                    if ($("#nombre").val() !== "" && $("#password").val() !== "" && $("#email").val() !== "") {    
+                        if ($("#password").val() === $("#password-confirm").val()) {
+                            const password = $("#password").val();
+                            enviarUsuario(
+                                {
+                                    nombre: $("#nombre").val(), 
+                                    password: CryptoJS.SHA256(password).toString(CryptoJS.enc.Hex),
+                                    email: $("#email").val()
+                                },
+                                callback,
+                                callback_error,
+                                
+                            )
+                        } else {
+                            alert("Los passwords introducidos no coinciden.");    
+                        }
+                    } else {
+                        alert("Por favor llene todos los campos antes de continuar.");
+                    }
+                })
+            });
+            const base_url = "http://localhost:3000";
+            const base_url_api = "http://localhost:3001";
+            const url = `${base_url_api}/api/v1/usuarios`;
+               
+            const callback = response_data => {
+                if (response_data.status === 201) {
+                    alert(response_data.message)
+                    setTimeout(() => window.location.replace(`${base_url}/login`), 500)
+                } else {
+                    alert("Ocurrio un error al intentar crear al usuario, verifique que los datos sean correctos y no estés intentando crear un usuario duplicado.");
+                }
+            };
+
+            const callback_error = () => alert("Ocurrio un error al intentar crear al usuario, verifique que los datos sean correctos y no estés intentando crear un usuario duplicado.");
+
+            const enviarUsuario = (usuario, callback, callback_error) => $.post(
+                `${url}/crear`, 
+                usuario,
+            )
+            .done(callback)
+            .fail(
+                callback_error
+            );
+        </script>
+    </body>
+</html>

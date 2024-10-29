@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chatnodejs-deployment
+  labels:
+    app: chatnodejs
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: chatnodejs
+  template:
+    metadata:
+      labels:
+        app: chatnodejs
+    spec:
+      containers:
+      - name: chatnodejs
+        image: local/chatnode
+        imagePullPolicy: Never
+        ports:
+          - containerPort: 3000
+          - containerPort: 3001
+        livenessProbe:
+          httpGet:
+            path: /                
+            port: 3000             
+          initialDelaySeconds: 30  
+          periodSeconds: 10        
+        readinessProbe:
+          httpGet:
+            path: /api/v1                
+            port: 3001             
+          initialDelaySeconds: 30   
+          periodSeconds: 10         
+
+      - name: mongo-db
+        image: mongo
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 27017
+        args: ["--dbpath","/data/db"]
+        livenessProbe:
+          exec:
+            command:
+              - mongo
+              - --disableImplicitSessions
+              - --eval
+              - "db.adminCommand('ping')"
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 6
+        readinessProbe:
+          exec:
+            command:
+              - mongo
+              - --disableImplicitSessions
+              - --eval
+              - "db.adminCommand('ping')"
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 6
+        env:
+        - name: MONGO_INITDB_DATABASE
+          value: p4_chat
+        - name: MONGO_INITDB_ROOT_USERNAME
+          value: "root"
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          value: "chaser316"
+        volumeMounts:
+        - name: "mongo-data-dir"
+          mountPath: "/data/db"
+        - name: "init-database"
+          mountPath: "/docker-entrypoint-initdb.d/"
+      volumes:
+      - name: "mongo-data-dir"
+      - name: "init-database"
+        configMap:
+          name: init-db-configmap
